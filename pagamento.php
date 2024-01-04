@@ -6,6 +6,14 @@ if($conn->connect_error)
     die('connessione fallita' .$conn->connect_error);
 }
 
+$id_prod = $_POST["bonsai"];
+
+$bonsai="SELECT * FROM  `prodotti` WHERE  `id`= $id_prod" ;
+$result=mysqli_query($conn,$bonsai);
+$row=$result->fetch_assoc();
+//$_SESSION["usr"];
+$_SESSION["idprod"]=$id_prod;
+//user idprod data
 ?>
 
 <html lang="it">
@@ -71,6 +79,7 @@ function check(){
   
   if (num.value.length != 16) {
         alert("Numero Carta non valido");
+        return false;
     }
   let cvv = document.getElementsByName("CVV")[0];
   
@@ -98,19 +107,44 @@ function check(){
     <li class="saluto"><h4> Bentornato  <?php print $_SESSION["name"]?> </h4> </li>
   </ul>
 
-<br><br>   
+<br><br>
 
   <div class="table-container">
-    <form onsubmit="return check()" name="input" method="POST">
+    <form onsubmit="return check()" name="input" method="POST" action="logged.php">
     <table class="invisible">
+    <input type="hidden" name="chekoperation" value="comprato">
+    <input type="hidden" name="prezzo" value=<?php 
+    
+    if($row['promo']==0)
+                {
+                  print($row['prezzo']);
+                }
+                else
+                {
+                  print(round($row['prezzo']*0.9, 2));
+                }
+    
+    ?>>
+    <input type="hidden" name="nome" value="<?php echo htmlspecialchars($row['nome']); ?>">
   <tbody>
   <tr>
     <td class="i_td"><label>Prdodotto:</label></td>
-    <td class="i_td"><label>TEST</label></td>
+    <td class="i_td"><label><?php print $row['nome']; ?></label></td>
   </tr>
   <tr>
     <td class="i_td"><label>Prezzo:</label></td>
-    <td class="i_td"><label>TEST</label></td>
+    <td class="i_td"><label><?php 
+    
+    if($row['promo']==0)
+                {
+                  print($row['prezzo']);
+                }
+                else
+                {
+                  print(round($row['prezzo']*0.9, 2));
+                }
+    
+    ?> $</label></td>
   </tr>
   <tr>
     <td class="i_td"><label>Intestatario Carta:</label></td>
@@ -139,6 +173,7 @@ function check(){
     <td class="i_td"><label>Indirizzo:</label></td>
     <td class="i_td"><input class="textfield" type="text" name="indirizzo" min="0" ></td>
   </tr>
+
   <tr>
     <td class="i_td" colspan="2"><input class="sub" type="submit" value="Compra"></td>
   </tr>

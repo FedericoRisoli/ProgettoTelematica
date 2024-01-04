@@ -1,4 +1,13 @@
 <?php
+require 'vendor/autoload.php';
+use PHPMailer\PHPMailer\PHPMailer;
+use PHPMailer\PHPMailer\SMTP;
+use PHPMailer\PHPMailer\Exception;
+require 'C:\xampp\htdocs\bdp\vendor\phpmailer\phpmailer\src\Exception.php';
+require 'C:\xampp\htdocs\bdp\vendor\phpmailer\phpmailer\src\PHPMailer.php';
+require 'C:\xampp\htdocs\bdp\vendor\phpmailer\phpmailer\src\SMTP.php';
+
+
 $conn=new mysqli('localhost','root','','bonsaistore');
 session_start();
 if($conn->connect_error)
@@ -17,12 +26,13 @@ if(isset($_POST["chekoperation"]))
     $date= $_POST["brt"];   //nascita
     $un= $_POST["un"];      //username
     $pss= $_POST["pw"];     //password
-    $sqlregistration="INSERT INTO `utenti`(`username`, `password`, `nome`, `cognome`, `datanascita`, `indirizzo`) VALUES ('$un','$pss','$n','$sn','$date','$add')" ;
+    $mail= $_POST["mail"];     //password
+    $sqlregistration="INSERT INTO `utenti`(`username`, `password`, `nome`, `cognome`, `datanascita`, `indirizzo`,`mail`) VALUES ('$un','$pss','$n','$sn','$date','$add','$mail')" ;
 
     //registrazione andata a buon fine?
     if ($conn->query($sqlregistration) === TRUE) 
       {
-        echo "<script>alert('Login Avvenuto.');</script>";
+        //echo "<script>alert('Login Avvenuto.');</script>";
         login($un,$pss,$conn);
       } 
       else
@@ -46,24 +56,79 @@ if(isset($_POST["chekoperation"]))
     $psw=$_POST["psw"];
     login($name,$psw,$conn);
   }
-}
+  else if($operation=="comprato"){
+    //id usr idprod, data
+    $name= $_SESSION["usr"];
+    $data = date("Y-m-d");
+    $prodotto = $_SESSION['idprod'];
+    $prezzo = $_POST['prezzo'];
 
-$sql2="SELECT nome, promo, prezzo, nomeimg FROM prodotti ORDER BY promo DESC" ;
+    $compro="INSERT INTO `acquisti`(`id`, `usr`, `idprod`, `data`, `prezzo`) VALUES (null,'$name',$prodotto,'$data', $prezzo);";
+    //eseguo la query
+      // Prepara i dettagli dell'ordine per l'email
+      $nomeProdotto=$_POST['nome'];   // Recupera il nome del prodotto
+      $prezzo = $_POST['prezzo']; // Recupera il prezzo del prodotto
+      $mail=$_SESSION["mail"];
+      
+     
+      
+      
+      //Load Composer's autoloader
+      require 'vendor/autoload.php';
+      //psw oich jhsi jutv zkdb
+      //Create an instance; passing `true` enables exceptions
+      $mail = new PHPMailer(true);
+      
+      try {
+          //Server settings
+          $mail->SMTPDebug = 0;                      //Enable verbose debug output
+          $mail->isSMTP();                                            //Send using SMTP
+          $mail->Host       = 'smtp.gmail.com';                     //Set the SMTP server to send through
+          $mail->SMTPAuth   = true;                                   //Enable SMTP authentication
+          $mail->Username   = 'progettiuniversita9@gmail.com';                     //SMTP username
+          $mail->Password   = 'oichjhsijutvzkdb';                               //SMTP password
+          $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;;            //Enable implicit TLS encryption
+          $mail->Port       = 587;                                    //TCP port to connect to; use 587 if you have set `SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS`
+      
+          //Recipients
+          $mail->setFrom('progettiuniversita9@gmail.com', 'no-reply Bonsai Confirmation');
+          $mail->addAddress($_SESSION["mail"]);     //Add a recipient
+
+ 
+          //Content
+          $mail->isHTML(true);                                  //Set email format to HTML
+          $mail->Subject = 'Bonsai Order Confirmationl';
+          $mail->Body    = "<div style='font-family: Brush Script MT, sans-serif; color: #FCA311;'>
+          <h1 style='font-size: 20px; color: #FCA311;'><b>Conferma Ordine</b></h1>
+          <p>Grazie per aver acquistato su Bonsai Store!</p>
+          <p style='color: #607466;'><b>Prodotto:</b> {$nomeProdotto}</p>
+          <p style='color: #607466;'><b>Prezzo:</b> €{$prezzo}</p>
+          <p>Il prodotto arriverà in 3 giorni lavorativi</p>
+          </div>";
+         
+      
+          $mail->send();
+          echo "<script>alert('La conferma dell\'ordine è stata inviata via email.');</script>";
+      } catch (Exception $e) {
+        echo "<script>alert('L'email non è stata inviata. Errore: {$mail->ErrorInfo}');</script>";
+      }
+  }}
+
+
+$sql2="SELECT id, nome, promo, prezzo, nomeimg FROM prodotti ORDER BY promo DESC" ;
 
 
 $result2=mysqli_query($conn,$sql2);//eseguo la query
 
-function login($u,$p,$conn)
-{
-  $sql="SELECT * FROM utenti WHERE username LIKE '$u' AND password LIKE '$p'" ;
-  $result=mysqli_query($conn,$sql);
-  if(mysqli_num_rows($result)>0 )  //questo è 1 modo per vedere se ci sono righe
-  {
-    while($row=$result->fetch_assoc())
-    {
-      $_SESSION["name"] = $row['nome'];
-      $_SESSION["usr"] = $row['username'];
-    } 
+function login($u, $p, $conn) {
+  $sql = "SELECT * FROM utenti WHERE username LIKE '$u' AND password LIKE '$p'";
+  $result = mysqli_query($conn, $sql);
+  if (mysqli_num_rows($result) > 0) {
+      while ($row = $result->fetch_assoc()) {
+          $_SESSION["name"] = $row['nome'];
+          $_SESSION["usr"] = $row['username'];
+          $_SESSION["mail"] = $row['mail']; 
+      }
      
   }
   else if((empty($u) || empty($p)|| ($u==""||$p==""))){
@@ -100,7 +165,7 @@ function login($u,$p,$conn)
       print('<li class="dropdown">
       <a href="javascript:void(0)" class="dropbtn">Gestisci prodotti</a>
       <div class="dropdown-content">
-        <a href="add.html">Aggiungi Prodotto</a>
+        <a href="add.php">Aggiungi Prodotto</a>
         <a href="modify.php">Modifica Prodotto</a>
         <a href="remove.php">Rimuovi Prodotto</a>
       </div>
@@ -162,7 +227,7 @@ function login($u,$p,$conn)
                 }
                 else
                 {
-                  print("<td>".$row['prezzo']*0.9." $"."</td>");
+                  print("<td>".round($row['prezzo']*0.9, 2)." $"."</td>");
                 }
               }
           }

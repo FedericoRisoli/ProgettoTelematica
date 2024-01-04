@@ -5,6 +5,15 @@ if($conn->connect_error)
     die('connessione fallita' .$conn->connect_error);
 }
 
+//reset sessione se ci sono precedenti sessioni(serve per logout più sicuro)
+session_start();
+session_destroy();
+
+
+function arrotonda_a_due_decimali($numero) {
+  return round($numero, 2);
+}
+
 $sql2="SELECT nome, promo, prezzo, nomeimg FROM prodotti ORDER BY promo DESC" ;
 
 
@@ -24,7 +33,7 @@ $result2=mysqli_query($conn,$sql2);//questi eseguono le query
     
     <li class="acc_button"><a class="normalbutton" href="registrati.php">Registrati</a></li>
     <li class="acc_button"><a class="normalbutton" href="login.php">Accedi</a></li>
-    <li><input type="text" class="searchbar" name="search" placeholder="Search.."></li>
+ 
   </ul>
 
       
@@ -75,7 +84,7 @@ $result2=mysqli_query($conn,$sql2);//questi eseguono le query
                 }
                 else
                 {
-                  print("<td>".$row['prezzo']*0.9." $"."</td>");
+                  print("<td>".round($row['prezzo']*0.9, 2)." $"."</td>");
                 }
 
               }

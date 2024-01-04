@@ -27,6 +27,20 @@ session_start();
       alert("La password deve avere almeno 6 caratteri e contenere un numero ed una lettera")
       return false;
     } 
+    // Controlla che la data inserita sia valida
+    var birthdate = new Date(document.getElementsByName("brt")[0].value);
+    var currentDate = new Date();
+    var minBirthdate = new Date();
+    minBirthdate.setFullYear(currentDate.getFullYear() - 16);
+
+    if (birthdate >= currentDate) {
+      alert("Inserire una data di nascita valida");
+      return false;
+    }
+    if (birthdate > minBirthdate) {
+      alert("Devi avere almeno 16 anni per registrarti");
+      return false;
+    }
     return true;
 
   }
@@ -46,8 +60,11 @@ session_start();
    
   </ul>
 
-    <form onsubmit="return checkForm()" class ="tform" name="input" method="POST" action="logged.php">
-      <table class="tform">
+  <br>
+  <div class="table-container">
+    <form onsubmit="return checkForm()" name="input" method="POST" action="logged.php">
+      <table>
+      <br>
         <tr>
             <td class="invisible"> <label>Nome: </label> <input class="textfield" type="text" name="n"></td>
             <td class="invisible"> <label>Cognome: </label> <input class="textfield" type="text" name="sn"></td>
@@ -60,13 +77,19 @@ session_start();
         <tr>
             <td class="invisible"> <label>Username: </label><input class="textfield" type="text" name="un"></td>
             <td class="invisible"> <label>Password: </label><input class="textfield" type="password" id="password" name="pw"></td>
+        </tr>
+        <tr> 
+            <td class="invisible"> <label>Mail: </label><input class="textfield" type="text" name="mail"></td>
+        </tr>
             <input type="hidden" name="chekoperation" value="reg">
         </tr>
+       
       </table>
       </p>
       <p>
         <input class="sub" type="submit" value="Sign Up">
       </p>
     </form>
+  </div>
 </body>
 </html>

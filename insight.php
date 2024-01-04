@@ -1,10 +1,25 @@
 <?php
-$conn=new mysqli('localhost','root','','bonsaistore');
-
-if($conn->connect_error)
-{
-    die('connessione fallita' .$conn->connect_error);
+$conn = new mysqli('localhost', 'root', '', 'bonsaistore');
+if ($conn->connect_error) {
+    die('Connessione fallita: ' . $conn->connect_error);
 }
+
+if (!isset($_SERVER['PHP_AUTH_USER']) || !isset($_SERVER['PHP_AUTH_PW'])) {
+
+    header('WWW-Authenticate: Basic realm="Area Protetta"');
+
+    header('HTTP/1.0 401 Unauthorized');
+    exit;
+} else {
+    $username = $_SERVER['PHP_AUTH_USER'];
+    $password = $_SERVER['PHP_AUTH_PW'];
+
+    if ($username != 'admin' || $password != 'admin') {
+        header("Location: logged.php?auth=failed");
+        exit;
+    }
+}
+
 //inizio query prododtto migliore
 $best_product="SELECT prodotti.id , COUNT(acquisti.idprod)as tot_acquisti FROM prodotti INNER JOIN acquisti ON prodotti.id=acquisti.idprod GROUP BY acquisti.idprod HAVING tot_acquisti>=(SELECT COUNT(acquisti.idprod)as tot_acquisti FROM prodotti INNER JOIN acquisti ON prodotti.id=acquisti.idprod GROUP BY acquisti.idprod LIMIT 1)";
 $res_BEST=mysqli_query($conn,$best_product);
@@ -30,7 +45,7 @@ $res_BEST=mysqli_query($conn,$best_product_selection);
           }
 //fine prodotto migliore
 //inizio prodotto peggiore
-$worse_product="SELECT prodotti.id , COUNT(acquisti.idprod)as tot_acquisti FROM prodotti INNER JOIN acquisti ON prodotti.id=acquisti.idprod GROUP BY acquisti.idprod HAVING tot_acquisti<=(SELECT COUNT(acquisti.idprod)as tot_acquisti FROM prodotti INNER JOIN acquisti ON prodotti.id=acquisti.idprod GROUP BY acquisti.idprod LIMIT 1)";
+$worse_product="SELECT prodotti.id , COUNT(acquisti.idprod)as tot_acquisti FROM prodotti INNER JOIN acquisti ON prodotti.id=acquisti.idprod GROUP BY acquisti.idprod HAVING tot_acquisti<=(SELECT COUNT(acquisti.idprod)as tot_acquisti FROM prodotti INNER JOIN acquisti ON prodotti.id=acquisti.idprod GROUP BY acquisti.idprod LIMIT 1) ORDER BY tot_acquisti DESC";
 $res_worse=mysqli_query($conn,$worse_product);
 
     if(mysqli_num_rows($res_worse)>0) 
@@ -80,19 +95,19 @@ $res_chp=mysqli_query($conn,$more_chp);
           }
 //fine prodotto con prezzo minore
 //inizio prezzo medio pagato da utente
-$avg_pay="SELECT AVG(subquery.guadagno) AS guadagno_medio FROM ( SELECT SUM(p.prezzo) AS guadagno FROM acquisti a JOIN prodotti p ON a.idprod = p.id WHERE MONTH(a.data) = MONTH(CURRENT_DATE()) AND YEAR(a.data) = YEAR(CURRENT_DATE()) GROUP BY a.usr ) AS subquery";
+$avg_pay="SELECT AVG(prezzo) as prezzo_medio FROM acquisti";
 $res_avg=mysqli_query($conn,$avg_pay);
     if(mysqli_num_rows($res_avg)>0)  
           {
               while($row=$res_avg->fetch_assoc())
               {
-                $avg_price=$row["guadagno_medio"]; //prende il prezzo medio pagato dagli utenti
+                $avg_price=$row["prezzo_medio"]; //prende il prezzo medio pagato dagli utenti
                
               }   
           }
 //fine prezzo medio pagato da utente
 //inizio guadagno totale da inizio anno
-$total_income="SELECT SUM(p.prezzo) as total FROM prodotti p INNER JOIN acquisti a ON p.id = a.idprod WHERE a.data >= '2023-01-01';";
+$total_income="SELECT SUM(a.prezzo) as total FROM prodotti p INNER JOIN acquisti a ON p.id = a.idprod WHERE a.data >= '2023-01-01';";
 $res_tot=mysqli_query($conn,$total_income);
     if(mysqli_num_rows($res_avg)>0)  
           {
@@ -104,6 +119,12 @@ $res_tot=mysqli_query($conn,$total_income);
           }
 
 ?>
+<script>
+// Controlla se l'URL ha il parametro 'auth=failed'
+if (new URLSearchParams(window.location.search).has('auth')) {
+    alert('Credenziali non valide');
+}
+</script>
 <html lang="it">
 <head>
   <meta charset="UTF-8">
@@ -175,11 +196,10 @@ $res_tot=mysqli_query($conn,$total_income);
   <?php print("<td>".$prezzo_c."$</td>");?>
   </tr>
   <tr>
-
   </tr>
   <tr>
     <td class="titolo_prod">Prezzo medio pagato dagli utenti :</td>
-    <?php print("<td>".$avg_price."$</td>");?>
+    <?php print("<td>".round($avg_price,2)."$</td>");?>
   </tr>
   <tr>
     <td class="titolo_prod">Guadagno Totale dall' 1/1 a oggi:</td>
@@ -187,7 +207,7 @@ $res_tot=mysqli_query($conn,$total_income);
   </tr>
 </tbody>
 </table>
-  </div>
+</div>
 
 
 

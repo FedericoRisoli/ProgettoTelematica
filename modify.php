@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <?php
+session_start();
 $conn=new mysqli('localhost','root','','bonsaistore');
 if($conn->connect_error)
 {
@@ -17,18 +18,20 @@ $result=mysqli_query($conn,$prodotti);
 </head>
 <body>
   <ul>
-    <li><a  href="index.php"> <img class="logo" src="imgsito/logo.png"></a></li>
+    <li><a  href="logged.php"> <img class="logo" src="imgsito/logo.png"></a></li>
     <li><h2 class="title">Bonsai Store</h2></li>
     <li class="acc_button"><a class="normalbutton" href="logged.php">Indietro</a></li>
     <li class="dropdown">
         <a href="javascript:void(0)" class="dropbtn">Gestisci prodotti</a>
         <div class="dropdown-content">
-          <a href="add.html">Aggiungi Prodotto</a>
+          <a href="add.php">Aggiungi Prodotto</a>
           <a href="remove.php">Rimuovi Prodotto</a>
         </div>
       </li>
   </ul>
-    <form class="addform" name="f" method="POST" action="productmanager.php" >
+  <br>
+  <div class="table-container">
+    <form name="f" method="POST" action="productmanager.php" >
       <table>
         <tr>
         <td class="invisible"><label>Seleziona prodotto</label></td>
@@ -64,5 +67,6 @@ foreach ($result as $row) {
  <input class="sub" type="submit" value="Modifica"></td>
 </tr>
     </form>  
+</div>
 </body>
 </html>
